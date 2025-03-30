@@ -5,13 +5,19 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import ProductCard from '@/components/ProductCard'
 import CategoryList from '@/components/CategoryList'
+import { ProductSkeleton, CategorySkeleton } from '@/components/Skeleton'
 import type { Product, Category } from '@/lib/supabase'
 
-function Loading() {
+function LoadingState() {
   return (
-    <div className="loading">
-      <div className="loading-spinner"></div>
-    </div>
+    <>
+      <CategorySkeleton />
+      <div className="products-grid">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <ProductSkeleton key={i} />
+        ))}
+      </div>
+    </>
   )
 }
 
@@ -104,7 +110,7 @@ export default function Home() {
   }, [selectedCategory, searchQuery])
 
   return (
-    <Suspense fallback={<Loading />}>
+    <Suspense fallback={<LoadingState />}>
       <main className="container">
         <div className="header">
           <h1>Car-Go Parts</h1>
@@ -124,26 +130,28 @@ export default function Home() {
           onChange={(e) => setSearchQuery(e.target.value)}
         />
 
-        <CategoryList
-          categories={categories}
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-        />
-
         {isLoading ? (
-          <Loading />
+          <LoadingState />
         ) : (
-          <div className="products-grid">
-            {products.length === 0 ? (
-              <p className="no-products">
-                No products found
-              </p>
-            ) : (
-              products.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))
-            )}
-          </div>
+          <>
+            <CategoryList
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+            />
+
+            <div className="products-grid">
+              {products.length === 0 ? (
+                <p className="no-products">
+                  No products found
+                </p>
+              ) : (
+                products.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))
+              )}
+            </div>
+          </>
         )}
       </main>
     </Suspense>
