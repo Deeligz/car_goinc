@@ -30,7 +30,7 @@ export default function Home() {
         .from('products')
         .select(`
           *,
-          categories(name)
+          categories:category_id(name)
         `)
       
       if (categoryId) {
@@ -56,7 +56,7 @@ export default function Home() {
       }
 
       console.log('Fetched products:', data)
-      setProducts(data)
+      setProducts(data as Product[])
       setError(null)
     } catch (err) {
       console.error('Error in fetchProducts:', err)

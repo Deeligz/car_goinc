@@ -1,11 +1,7 @@
 import type { Product } from '@/lib/supabase'
 
 interface ProductCardProps {
-  product: Product & {
-    categories: {
-      name: string
-    }
-  }
+  product: Product
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
@@ -16,7 +12,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <p className="product-description">{product.description}</p>
         <div className="product-footer">
           <span className="product-price">${product.price.toFixed(2)}</span>
-          <span className="product-category">{product.categories.name}</span>
+          <span className="product-category">{product.categories?.name || 'Uncategorized'}</span>
         </div>
       </div>
     </div>
