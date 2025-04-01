@@ -28,16 +28,44 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+  const itemsPerPage = 20
 
   const fetchProducts = async (categoryId: number | null = null) => {
     try {
       setIsLoading(true)
+      // First, get total count
+      let countQuery = supabase
+        .from('products')
+        .select('id', { count: 'exact' })
+      
+      if (categoryId) {
+        countQuery = countQuery.eq('category_id', categoryId)
+      }
+      
+      if (searchQuery) {
+        countQuery = countQuery.ilike('name', `%${searchQuery}%`)
+      }
+
+      const { count, error: countError } = await countQuery
+
+      if (countError) {
+        console.error('Error getting count:', countError)
+        setError(`Error getting count: ${countError.message}`)
+        return
+      }
+
+      setTotalCount(count || 0)
+
+      // Then get paginated data
       let query = supabase
         .from('products')
         .select(`
           *,
           categories:category_id(name)
         `)
+        .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1)
       
       if (categoryId) {
         query = query.eq('category_id', categoryId)
@@ -106,8 +134,15 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
+    setCurrentPage(1) // Reset to first page when category or search changes
     fetchProducts(selectedCategory)
   }, [selectedCategory, searchQuery])
+
+  useEffect(() => {
+    fetchProducts(selectedCategory)
+  }, [currentPage])
+
+  const totalPages = Math.ceil(totalCount / itemsPerPage)
 
   return (
     <Suspense fallback={<LoadingState />}>
@@ -151,6 +186,28 @@ export default function Home() {
                 ))
               )}
             </div>
+
+            {totalPages > 1 && (
+              <div className="pagination">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="pagination-button"
+                >
+                  Previous
+                </button>
+                <span className="pagination-info">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="pagination-button"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </>
         )}
       </main>
